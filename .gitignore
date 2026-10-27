@@ -1,0 +1,27 @@
+build/
+out/
+bin/
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+
+gradle-local.properties
+
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+*.log
+# Сэмплы логов — данные задания, а не мусор сборки.
+!samples/logs/*.log
+*.hprof
+hs_err_pid*
+replay_pid*
