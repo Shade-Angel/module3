@@ -1,50 +1,62 @@
 package academy.incidentradar.mandatory.mr1;
 
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.jupiter.api.Disabled;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import academy.incidentradar.support.CliRunner;
 
 /** Обязательные тесты: валидация аргументов командной строки. */
 @DisplayName("MR1. Валидация аргументов CLI")
 class CliValidationTest {
 
     @Test
-    @Disabled("MR1: реализуй тест и удали эту строку")
     @DisplayName("Не передан обязательный --path -> exit code 2")
     void missingPathExitsWithTwo() {
-        fail("Тест не реализован");
+        CliRunner.Result result = CliRunner.run("--output-format", "json");
+        assertThat(result.exitCode()).isEqualTo(2);
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"xml", "csv", "txt"})
-    @Disabled("MR1: реализуй тест и удали эту строку")
     @DisplayName("Неподдерживаемый --output-format \"{0}\" -> exit code 2")
     void unsupportedOutputFormatExitsWithTwo(String format) {
-        fail("Тест не реализован");
+        CliRunner.Result result = CliRunner.run("--path", "samples/logs/access-2025-03-01.log", "--output-format", format);
+        assertThat(result.exitCode()).isEqualTo(2);
     }
 
     @Test
-    @Disabled("MR1: реализуй тест и удали эту строку")
     @DisplayName("--from больше или равен --to -> exit code 2")
     void fromNotBeforeToExitsWithTwo() {
-        fail("Тест не реализован");
+        CliRunner.Result result1 = CliRunner.run("--path", "samples/logs/access-2025-03-01.log", "--from", "2025-03-02", "--to", "2025-03-01");
+        assertThat(result1.exitCode()).isEqualTo(2);
+        CliRunner.Result result2 = CliRunner.run("--path", "samples/logs/access-2025-03-01.log", "--from", "2025-03-01", "--to", "2025-03-01");
+        assertThat(result2.exitCode()).isEqualTo(2);
     }
 
     @Test
-    @Disabled("MR1: реализуй тест и удали эту строку")
     @DisplayName("Несуществующий локальный файл -> exit code 2")
     void missingLocalFileExitsWithTwo() {
-        fail("Тест не реализован");
+        CliRunner.Result result = CliRunner.run("--path", "samples/logs/does_not_exist.log", "--output-format", "json");
+        assertThat(result.exitCode()).isEqualTo(2);
     }
 
     @Test
-    @Disabled("MR1: реализуй тест и удали эту строку")
     @DisplayName("Расширение файла отчёта не соответствует формату -> exit code 2")
-    void outputExtensionMismatchExitsWithTwo() {
-        fail("Тест не реализован");
+    void outputExtensionMismatchExitsWithTwo() throws IOException {
+        Path tempDir = Files.createTempDirectory("radar");
+        Path report = tempDir.resolve("report.md");
+        CliRunner.Result result = CliRunner.run(
+            "--path", "samples/logs/access-2025-03-01.log", 
+            "--output-format", "json", 
+            "--output-path", report.toString()
+        );
+        assertThat(result.exitCode()).isEqualTo(2);
     }
 }
