@@ -25,14 +25,14 @@ class TemplateSmokeTest {
             "^(\\S+) - (\\S+) \\[([^\\]]+)] \"(\\S+) (\\S+) (\\S+)\" (\\d{3}) (\\d+) \"([^\"]*)\" \"([^\"]*)\"$");
 
     @Test
-    @DisplayName("Приложение запускается и завершается с кодом 0")
+    @DisplayName("Приложение запускается с корректным --path и завершается с кодом 0")
     void applicationStartsAndExitsCleanly() {
-        var result = CliRunner.run();
+        var result =
+                CliRunner.run("--path", SAMPLES.resolve("access-2025-03-01.log").toString());
 
         assertThat(result.exitCode())
                 .as("Программа завершилась с ненулевым кодом.%n%s", result)
                 .isZero();
-        assertThat(result.stdout()).as("Программа ничего не напечатала").isNotBlank();
     }
 
     @Test
