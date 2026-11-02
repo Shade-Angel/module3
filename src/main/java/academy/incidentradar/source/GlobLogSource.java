@@ -1,5 +1,6 @@
 package academy.incidentradar.source;
 
+import academy.incidentradar.CliException;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.FileSystems;
@@ -7,80 +8,98 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import academy.incidentradar.CliException;
-
-public class GlobLogSource implements LogSource{
+public class GlobLogSource implements LogSource {
     private final String glob;
-    private List<Path> files;
 
-    public GlobLogSource(String glob){
+    private static final String STAR = "*";
+    private static final String QUESTION = "?";
+    private static final String SLASH = "/";
+    private static final String BACKSLASH = "\\";
+    private static final String CURRENT_DIR = ".";
+    private static final int CODE_MINUS_ONE = -1;
+
+    private List<Path> files = new ArrayList<>();
+
+    public GlobLogSource(String glob) {
         this.glob = glob;
     }
 
-    @Override 
-    public  Stream<String> lines() throws IOException{
-        PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob: " + glob);
+    @Override
+    @SuppressWarnings("StreamResourceLeak")
+    public Stream<String> lines() throws IOException {
+        String systemGlob = glob.replace("/", "\\\\");
+        PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + systemGlob);
+
         Path baseDir = getBaseDir(glob);
 
-        if(!Files.exists(baseDir)){
-            throw new CliException("Место для glob не найдено по : " + baseDir);
+        if (!Files.exists(baseDir)) {
+            throw new CliException("Директория для glob-маски не найдена: " + baseDir.toAbsolutePath());
         }
 
-        try(Stream<Path> walk = Files.walk(baseDir)){
+        Path currentDir = Paths.get("").toAbsolutePath().normalize();
+        Path absoluteBaseDir = baseDir.toAbsolutePath().normalize();
+
+        try (Stream<Path> walk = Files.walk(absoluteBaseDir)) {
             files = walk.filter(Files::isRegularFile)
-                .filter(matcher::matches)
-                .collect(Collectors.toList());
+                    .filter(file -> {
+                        Path relativePath =
+                                currentDir.relativize(file.toAbsolutePath().normalize());
+                        return matcher.matches(relativePath);
+                    })
+                    .collect(Collectors.toList());
         }
 
-        if(files.isEmpty()){
-            throw new CliException("С помощью glob  не найден файл: " + glob);
+        if (files.isEmpty()) {
+            throw new CliException("По glob-маске не найдено файлов: " + glob);
         }
 
-        for(Path p: files){
+        for (Path p : files) {
             String name = p.getFileName().toString().toLowerCase();
-            if(!name.endsWith(".log") && !name.endsWith(".txt")){
-                throw new CliException("Неподдерживаемое расширение файла : " + name);
+            if (!name.endsWith(".log") && !name.endsWith(".txt")) {
+                throw new CliException("Неподдерживаемое расширение файла: " + name);
             }
         }
 
         return files.stream().flatMap(p -> {
-            try{
+            try {
                 return Files.lines(p);
-            }catch(IOException e){
+            } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
         });
     }
 
-    private  Path getBaseDir(String glob){
-        int startIdx = glob.indexOf("*");
-        int qIdx = glob.indexOf("?");
-        int min = -1000000000;
+    private Path getBaseDir(String globPattern) {
+        int startIdx = globPattern.indexOf(STAR);
+        int qIdx = globPattern.indexOf(QUESTION);
+        int min = CODE_MINUS_ONE;
 
-        if(startIdx >= 0){
+        if (startIdx >= 0) {
             min = startIdx;
         }
 
-        if(qIdx >= 0 && (min == -1 || qIdx < min)){
+        if (qIdx >= 0 && (min == CODE_MINUS_ONE || qIdx < min)) {
             min = qIdx;
         }
 
-        if(min == -1000000000){
-            Path p = Paths.get(glob);
-            return  p.getParent() == null ? Paths.get(".") : p.getParent();
+        if (min == CODE_MINUS_ONE) {
+            Path p = Paths.get(globPattern);
+            return p.getParent() == null ? Paths.get(CURRENT_DIR) : p.getParent();
         }
-        String befor = glob.substring(0, min);
-        int lastSep =Math.max(befor.lastIndexOf("/"), befor.lastIndexOf("\\"));
-        if(lastSep == -1){
-            return Paths.get(".");
+
+        String before = globPattern.substring(0, min);
+        int lastSep = Math.max(before.lastIndexOf(SLASH), before.lastIndexOf(BACKSLASH));
+        if (lastSep == -1) {
+            return Paths.get(CURRENT_DIR);
         }
-        return  Paths.get(befor.substring(0, lastSep));
+        return Paths.get(before.substring(0, lastSep));
     }
 
-    @Override 
-    public void close(){}
+    @Override
+    public void close() {}
 }

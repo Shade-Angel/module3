@@ -66,5 +66,57 @@ python3 -m http.server 8000 --bind 127.0.0.1 --directory samples/logs
 
 Свой код складывай в `src/main/java/academy/incidentradar/`.
 
-**Этот файл — твой.** Опиши здесь, что получилось, как это запускать и какие
-решения ты принял. Обновление README входит в чеклист каждого merge request'а.
+
+
+
+# MR1
+**<p style="color: red">Что сделано:</p>**
+
+**<p style="padding-left: 50px; border: 1px solid red">CLI и параметры командной строки:<p>**
+
+- Парсинг аргументов через picocli: --path, --output-format, --output-path, --from, --to
+- Configuration - простая модель с геттерами, без валидации
+- Main превращает исключения в exit codes: CliException -> код 2, всё остальное -> код 1
+
+**<p style="padding-left: 50px; border: 1px solid red">Валидация:<p>**
+
+- --output-format принимает только json или markdown
+- --from строго раньше --to, если заданы обе даты
+- Расширение --output-path должно соответствовать формату (.json или json, .md/.markdown или markdown)
+- Существующий --output-path отклоняется, чтобы не перезаписать чужой файл случайно
+
+**<p style="padding-left: 50px; border: 1px solid red">Источники логов:<p>**
+
+- FileLogSource - потоковое чтение через Files.lines() с проверкой существования файла и расширения (.log, .txt)
+- GlobLogSource - Files.walk + PathMatcher("glob:..."), все найденные файлы объединяются в один Stream<String>
+- UrlLogSource - HttpClient + BodyHandlers.ofLines(), код 404 превращается в CliException
+- LogSourceFactory выбирает реализацию по префиксу (http(s)://) или наличию */?
+
+**<p style="padding-left: 50px; border: 1px solid red">Потоковое чтение:<p>**
+
+- Все источники возвращают Stream<String>, не читают файл целиком в память
+- В App.run() стрим закрывается
+
+**<p style="padding-left: 50px; border: 1px solid red">Коды возврата:<p>**
+
+- 0 — успешный запуск
+- 1 — непредвиденная ошибка (I/O, RuntimeException)
+- 2 — ошибка использования (невалидные аргументы, несуществующий файл, 404 от URL, конфликт формата/расширения, существующий output)
+
+
+## Структура
+
+| Файл | О чём |
+| :--- | :--- |
+| `Main.java`                           | Точка входа, CLI через picocli, маппинг исключений в exit codes |
+| `Configuration.java`                  | Класс с аргументами CLI и аннотациями @Option |
+| `CliException.java`                   | Исключение для ошибок валидации -> exit code 2 |
+| `App.java`                            | Валидация параметров и оркестрация чтения источника |
+| `source/LogSource.java`               | Интерфейс источника логов (lines + close) |
+| `source/LogSourceFactory.java`        | Фабрика источников по строке  |
+| `source/FileLogSource.java`           | Чтение локального файла (.log / .txt) |
+| `source/UrlLogSource.java`            | Чтение по HTTP/HTTPS с поддержкой 404 |
+| `source/GlobLogSource.java`           | Чтение по glob-маске |
+| `mandatory/mr1/CliValidationTest.java`| Обязательные тесты: отсутствие --path, неподдерживаемый формат, from >= to, несуществующий файл, конфликт расширения|
+| `mandatory/mr1/LogSourceTest.java`    | Обязательные тесты: локальный файл, glob, URL, URL 404 |
+| `TxtFileTest.java`                    | Собственный тест, проверка что .txt читается, а файл с другим расширением отвергается отвергается|
