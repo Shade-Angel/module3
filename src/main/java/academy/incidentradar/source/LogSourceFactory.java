@@ -1,22 +1,23 @@
 package academy.incidentradar.source;
 
+import academy.incidentradar.CliException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 
-import academy.incidentradar.CliException;
+public final class LogSourceFactory {
+    private LogSourceFactory() {}
 
-public class LogSourceFactory {
-    public  static LogSource create(String path){
-        if(path.startsWith("http://") || path.startsWith("https://")){
-            try{
+    public static LogSource create(String path) {
+        if (path.startsWith("http://") || path.startsWith("https://")) {
+            try {
                 return new UrlLogSource(new URI(path));
-            }catch(URISyntaxException e){
+            } catch (URISyntaxException e) {
                 throw new CliException("Неккоректный URL, сейчас он равен :  " + path);
             }
         }
 
-        if(path.contains("*") || path.contains("?")){
+        if (path.contains("*") || path.contains("?")) {
             return new GlobLogSource(path);
         }
 

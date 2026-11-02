@@ -1,48 +1,48 @@
 package academy.incidentradar.source;
 
+import academy.incidentradar.CliException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.stream.Stream;
-
 import org.jspecify.annotations.Nullable;
 
-import academy.incidentradar.CliException;
-
-public class UrlLogSource implements LogSource{
+public class UrlLogSource implements LogSource {
+    private static final int HTTP_NOT_FOUND = 404;
+    private static final int HTTP_CLIENTT_ERROR_START = 400;
     private final URI uri;
 
-    @Nullable 
+    @Nullable
     private HttpResponse<Stream<String>> res;
 
-    public  UrlLogSource(URI uri){
+    public UrlLogSource(URI uri) {
         this.uri = uri;
     }
 
-    @Override 
-    public Stream<String> lines() throws IOException{
-        try{
+    @Override
+    public Stream<String> lines() throws IOException {
+        try {
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest req = HttpRequest.newBuilder(uri).build();
             this.res = client.send(req, HttpResponse.BodyHandlers.ofLines());
-            if(res.statusCode() == 404){
-                throw new  CliException("URL вернул ошибку 404: " + uri);
+            if (res.statusCode() == HTTP_NOT_FOUND) {
+                throw new CliException("URL вернул ошибку 404: " + uri);
             }
-            if(res.statusCode() >= 400){
+            if (res.statusCode() >= HTTP_CLIENTT_ERROR_START) {
                 throw new CliException("URL недоступен, код ошибки: " + res.statusCode() + "  -:- " + uri);
             }
-            return  res.body();
-        }catch(InterruptedException e){
+            return res.body();
+        } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IOException("Чтение URL было прервано!", e);
         }
     }
 
-    @Override 
-    public void close(){
-        if(res != null && res.body() != null){
+    @Override
+    public void close() {
+        if (res != null && res.body() != null) {
             res.body().close();
         }
     }
