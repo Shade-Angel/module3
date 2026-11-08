@@ -15,14 +15,12 @@ import java.util.stream.Stream;
 
 public class GlobLogSource implements LogSource {
     private final String glob;
-
     private static final String STAR = "*";
     private static final String QUESTION = "?";
     private static final String SLASH = "/";
     private static final String BACKSLASH = "\\";
     private static final String CURRENT_DIR = ".";
     private static final int CODE_MINUS_ONE = -1;
-
     private List<Path> files = new ArrayList<>();
 
     public GlobLogSource(String glob) {
@@ -32,16 +30,28 @@ public class GlobLogSource implements LogSource {
     @Override
     @SuppressWarnings("StreamResourceLeak")
     public Stream<String> lines() throws IOException {
-        String systemGlob = glob.replace("/", "\\\\");
+        // 1. Приводим входящую маску к единому виду с прямыми слешами
+        String normalizedGlob = glob.replace(BACKSLASH, SLASH);
+
+        // 2. Адаптируем маску под текущую ОС
+        // На Windows разделитель путей — '\'. Но в синтаксисе glob символ '\' — это экранирование.
+        // Чтобы PathMatcher искал буквальный '\', в строке паттерна должно быть написано '\\'.
+        // На Linux разделитель '/', и его экранировать не нужно.
+        String systemGlob;
+        if (FileSystems.getDefault().getSeparator().equals(BACKSLASH)) {
+            systemGlob = normalizedGlob.replace(SLASH, BACKSLASH + BACKSLASH);
+        } else {
+            systemGlob = normalizedGlob;
+        }
+
         PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + systemGlob);
 
         Path baseDir = getBaseDir(glob);
-
         if (!Files.exists(baseDir)) {
             throw new CliException("Директория для glob-маски не найдена: " + baseDir.toAbsolutePath());
         }
 
-        Path currentDir = Paths.get("").toAbsolutePath().normalize();
+        Path currentDir = Paths.get(CURRENT_DIR).toAbsolutePath().normalize();
         Path absoluteBaseDir = baseDir.toAbsolutePath().normalize();
 
         try (Stream<Path> walk = Files.walk(absoluteBaseDir)) {
@@ -82,7 +92,6 @@ public class GlobLogSource implements LogSource {
         if (startIdx >= 0) {
             min = startIdx;
         }
-
         if (qIdx >= 0 && (min == CODE_MINUS_ONE || qIdx < min)) {
             min = qIdx;
         }
@@ -94,7 +103,8 @@ public class GlobLogSource implements LogSource {
 
         String before = globPattern.substring(0, min);
         int lastSep = Math.max(before.lastIndexOf(SLASH), before.lastIndexOf(BACKSLASH));
-        if (lastSep == -1) {
+
+        if (lastSep == CODE_MINUS_ONE) {
             return Paths.get(CURRENT_DIR);
         }
         return Paths.get(before.substring(0, lastSep));
