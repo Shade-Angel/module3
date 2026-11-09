@@ -1,12 +1,20 @@
 package academy.incidentradar;
 
+import academy.incidentradar.filter.DateFilter;
+import academy.incidentradar.model.LogRecord;
+import academy.incidentradar.parser.LogParser;
 import academy.incidentradar.source.LogSource;
 import academy.incidentradar.source.LogSourceFactory;
+import academy.incidentradar.statistics.Statistics;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class App {
     private final Configuration config;
@@ -23,13 +31,23 @@ public class App {
         validateDate();
         validateOutput();
 
+        LogParser parser = new LogParser();
+        DateFilter dateFilter = new  DateFilter(config.getFrom(), config.getTo());
+
         try (LogSource source = LogSourceFactory.create(path)) {
             try (var lines = source.lines()) {
-                long count = lines.count();
-                System.out.println("Успшно прочитан : " + count + "строк.");
+                List<LogRecord> records = lines
+                    .map(parser::parse)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .filter(dateFilter)
+                    .collect(Collectors.toList());
+                
+                Statistics stat = new Statistics(records);
+                System.out.println("Статистика успешно прочитана : " + stat);
             }
         } catch (IOException e) {
-            throw new RuntimeException("Ошибка чтения: " + e.getMessage(), e);
+            throw new CliException("Ошибка чтения: " + e.getMessage());
         }
     }
 
