@@ -1,10 +1,9 @@
 package academy.incidentradar.statistics;
 
+import academy.incidentradar.model.LogRecord;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import academy.incidentradar.model.LogRecord;
 
 public class Statistics {
     private final long totalRequests;
@@ -14,59 +13,62 @@ public class Statistics {
     private final long maxSize;
     private final double p65Size;
 
-    public  Statistics(List<LogRecord> record){
+    private static final int TOP_RESOURCES_LIMIT = 10;
+    private static final double ROUNDING_MULTIPLIER = 100.0;
+    private static final double P95_PERCENTILE = 0.95;
+
+    public Statistics(List<LogRecord> record) {
         this.totalRequests = record.size();
-        this.resCode = record.stream()
-            .collect(Collectors.groupingBy(LogRecord::status, Collectors.counting()));
-        this.topResources = record.stream()
-            .collect(Collectors.groupingBy(LogRecord::resource, Collectors.counting()))
-            .entrySet().stream()
-            .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-            .limit(10)
-            .collect(Collectors.toList());
+        this.resCode = record.stream().collect(Collectors.groupingBy(LogRecord::status, Collectors.counting()));
+        this.topResources =
+                record.stream()
+                        .collect(Collectors.groupingBy(LogRecord::resource, Collectors.counting()))
+                        .entrySet()
+                        .stream()
+                        .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                        .limit(TOP_RESOURCES_LIMIT)
+                        .collect(Collectors.toList());
 
-        List<Long> sizes = record.stream()
-            .map(LogRecord::bodyBytesSent)
-            .sorted()
-            .collect(Collectors.toList());
+        List<Long> sizes =
+                record.stream().map(LogRecord::bodyBytesSent).sorted().collect(Collectors.toList());
 
-        if(sizes.isEmpty()){
+        if (sizes.isEmpty()) {
             this.avgSize = 0.0;
             this.maxSize = 0;
             this.p65Size = 0.0;
-        }else{
+        } else {
             double sum = sizes.stream().mapToLong(Long::longValue).sum();
-            this.avgSize = Math.round((sum / sizes.size()) * 100.0) / 100;
+            this.avgSize = Math.round((sum / sizes.size()) * ROUNDING_MULTIPLIER) / ROUNDING_MULTIPLIER;
             this.maxSize = sizes.get(sizes.size() - 1);
 
             int n = sizes.size();
-            int rank = (int) Math.ceil(0.95 * n);
+            int rank = (int) Math.ceil(P95_PERCENTILE * n);
             int idx = Math.max(0, Math.min(rank - 1, n - 1));
             this.p65Size = sizes.get(idx);
         }
     }
 
-    public long getTotalRequests(){
+    public long getTotalRequests() {
         return totalRequests;
     }
 
-    public Map<Integer, Long> getResCode(){
+    public Map<Integer, Long> getResCode() {
         return resCode;
     }
 
-    public List<Map.Entry<String, Long>> getTopResources(){
+    public List<Map.Entry<String, Long>> getTopResources() {
         return topResources;
     }
 
-    public double getAvgSize(){
+    public double getAvgSize() {
         return avgSize;
     }
 
-    public long getMaxSize(){
+    public long getMaxSize() {
         return maxSize;
     }
 
-    public double getP95Size(){
+    public double getP95Size() {
         return p65Size;
     }
 }

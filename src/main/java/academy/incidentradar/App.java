@@ -6,7 +6,6 @@ import academy.incidentradar.parser.LogParser;
 import academy.incidentradar.source.LogSource;
 import academy.incidentradar.source.LogSourceFactory;
 import academy.incidentradar.statistics.Statistics;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,17 +31,16 @@ public class App {
         validateOutput();
 
         LogParser parser = new LogParser();
-        DateFilter dateFilter = new  DateFilter(config.getFrom(), config.getTo());
+        DateFilter dateFilter = new DateFilter(config.getFrom(), config.getTo());
 
         try (LogSource source = LogSourceFactory.create(path)) {
             try (var lines = source.lines()) {
-                List<LogRecord> records = lines
-                    .map(parser::parse)
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .filter(dateFilter)
-                    .collect(Collectors.toList());
-                
+                List<LogRecord> records = lines.map(parser::parse)
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .filter(dateFilter)
+                        .collect(Collectors.toList());
+
                 Statistics stat = new Statistics(records);
                 System.out.println("Статистика успешно прочитана : " + stat);
             }
