@@ -71,6 +71,6 @@ public class LogParser {
         }
 
         return Optional.of(
-                new LogRecord(ip, zoneTime.toLocalDate(), reqParts[1], reqParts[1], reqParts[2], status, byteSent));
+                new LogRecord(ip, zoneTime.toLocalDate(), reqParts[0], reqParts[1], reqParts[2], status, byteSent));
     }
 }

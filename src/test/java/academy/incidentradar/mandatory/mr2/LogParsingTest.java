@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import academy.incidentradar.model.LogRecord;
 import academy.incidentradar.parser.LogParser;
 import java.util.Optional;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +15,6 @@ class LogParsingTest {
     private final LogParser parser = new LogParser();
 
     @Test
-    @Disabled("MR2: реализуй тест и удали эту строку")
     @DisplayName("Эталонная строка разбирается на корректные поля")
     void referenceLineIsParsedCorrectly() {
         String line = "93.180.71.3 - - [17/May/2015:08:05:32 +0000] "
@@ -34,7 +32,6 @@ class LogParsingTest {
     }
 
     @Test
-    @Disabled("MR2: реализуй тест и удали эту строку")
     @DisplayName("Метод, ресурс и протокол разбираются в три отдельных поля")
     void requestIsSplitIntoThreeFields() {
         String line =
@@ -48,7 +45,6 @@ class LogParsingTest {
     }
 
     @Test
-    @Disabled("MR2: реализуй тест и удали эту строку")
     @DisplayName("Битая строка пропускается с warning'ом, программа не падает")
     void malformedLineIsSkippedWithWarning() {
         String malformedLine = "this is not a valid log line";
