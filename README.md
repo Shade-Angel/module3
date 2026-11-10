@@ -120,3 +120,42 @@ python3 -m http.server 8000 --bind 127.0.0.1 --directory samples/logs
 | `mandatory/mr1/CliValidationTest.java`| Обязательные тесты: отсутствие --path, неподдерживаемый формат, from >= to, несуществующий файл, конфликт расширения|
 | `mandatory/mr1/LogSourceTest.java`    | Обязательные тесты: локальный файл, glob, URL, URL 404 |
 | `TxtFileTest.java`                    | Собственный тест, проверка что .txt читается, а файл с другим расширением отвергается отвергается|
+
+
+
+
+
+<br>
+# MR2
+
+**<p style="color: red">Что сделано:</p>**
+
+**Парсинг логов:**
+- Реализован класс `LogParser` с методом `parse`, который разбирает строку NGINX combined log format
+- Метод, ресурс и протокол извлекаются как три отдельных поля из `"GET /path HTTP/1.1"`
+- Битые строки пропускаются с логированием через `Optional.empty()`
+
+**Фильтрация по датам:**
+- Реализован класс `DateFilter` (Predicate<LogRecord>)
+- Поддерживаются все 4 сценария: без фильтра, только --from, только --to, обе границы
+
+**Расчёт статистики:**
+- Класс `Statistics` агрегирует данные: total requests, распределение кодов, top-10 ресурсов
+- Метод расчёта p95 c округлением **Nearest rank, ceil(0.95 * n)**
+
+**Интеграция:**
+- В `App.run` построен Stream-конвейер по принципу source.lines() -> parser -> filter -> statistics
+
+## Структура
+
+| Файл | О чём |
+| :--- | :--- |
+| `model/LogRecord.java`              | Record с полями: ip, date, method, resource, protocol, status, bodyBytesSent |
+| `parser/LogParser.java`             | Разбор строки лога через regex, обработка битых строк |
+| `filter/DateFilter.java`            | Predicate для фильтрации записей по датам |
+| `statistics/Statistics.java`        | Статистика с total requests, распределение кодов, top-10 ресурсов |
+| `App.java`                          | Stream-конвейер чтения -> парсинга -> фильтрации -> статистики |
+| `mandatory/mr2/LogParsingTest.java` | Обязательные тесты: парсинг эталонной строки, три поля, битые строки |
+| `mandatory/mr2/DateFilterTest.java` | Обязательные тесты: 4 комбинации границ дат |
+| `mandatory/mr2/StatisticsTest.java` | Обязательные тесты: коды, top-10, average, max, p95, округление |
+| `NullOrCalculationTest`             | Собственный тест, проверяет на деление на ноль при пустых данных и обработку null/blank строк парсером.|

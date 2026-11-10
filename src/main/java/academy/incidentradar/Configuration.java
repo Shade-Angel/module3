@@ -18,10 +18,10 @@ public class Configuration {
             defaultValue = "markdown",
             description = "json или markdown")
     @Nullable
-    private String outputForma;
+    private String outputFormat;
 
     @Option(
-            names = {"0", "--output-path"},
+            names = {"-o", "--output-path"},
             description = "путь файла")
     @Nullable
     private Path outputPath;
@@ -45,7 +45,7 @@ public class Configuration {
 
     @Nullable
     public String getOutputFormat() {
-        return outputForma;
+        return outputFormat;
     }
 
     @Nullable
