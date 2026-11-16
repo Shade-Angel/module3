@@ -197,3 +197,8 @@ python3 -m http.server 8000 --bind 127.0.0.1 --directory samples/logs
 | `source/LogSource.java`                       | Добавлен метод `getFiles()` для отслеживания обработанных файлов |
 | `mandatory/mr3/ReportAndExitCodeTest.java`    | Обязательные blackbox-тесты |
 | `mandatory/mr3/ReportEdgeCasesTest.java`      | Личный тест проверяет пустой файл логов, а именно от деления на ноль |
+
+**Бонусы 12 баллов:**
+- Вывод отчёта в stdout, если не указан `--output-path`
+- Названия HTTP-кодов в Markdown-отчёте
+- Поддержка генерации отчёта в формате Asciidoc

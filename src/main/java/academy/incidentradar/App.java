@@ -3,6 +3,7 @@ package academy.incidentradar;
 import academy.incidentradar.filter.DateFilter;
 import academy.incidentradar.model.LogRecord;
 import academy.incidentradar.parser.LogParser;
+import academy.incidentradar.report.AsciiReport;
 import academy.incidentradar.report.JsonReportGenerator;
 import academy.incidentradar.report.MarkdownReportGenerator;
 import academy.incidentradar.report.ReportGenerate;
@@ -64,6 +65,8 @@ public class App {
         String format = currentFormat();
         if ("json".equals(format)) {
             return new JsonReportGenerator();
+        } else if ("adoc".equals(format)) {
+            return new AsciiReport();
         } else {
             return new MarkdownReportGenerator();
         }
@@ -80,8 +83,8 @@ public class App {
     private void validateForma() {
         String format =
                 config.getOutputFormat() != null ? config.getOutputFormat().toLowerCase() : "markdown";
-        if (!"json".equals(format) && !"markdown".equals(format)) {
-            throw new CliException("Вы ввели непправильный формат --output-format, возможны json или markdown");
+        if (!"json".equals(format) && !"markdown".equals(format) && !"adoc".equals(format)) {
+            throw new CliException("Вы ввели непправильный формат --output-format, возможны json, markdown, adoc");
         }
     }
 
@@ -106,6 +109,9 @@ public class App {
         }
         if ("markdown".equals(format) && !"md".equals(ext) && !"markdown".equals(ext)) {
             throw new CliException("Расширение выходного файла не является markdown.");
+        }
+        if ("adoc".equals(format) && !"adoc".equals(ext) && !"asciidoc".equals(ext)) {
+            throw new CliException("Расширение выходного файла не является .adoc или .asciidoc");
         }
         if (Files.exists(output)) {
             throw new CliException("Файл отчёта уже существует: " + output);
