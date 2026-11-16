@@ -18,26 +18,25 @@ public class Statistics {
     private static final double ROUNDING_MULTIPLIER = 100.0;
     private static final double P95_PERCENTILE = 0.95;
 
-    public Statistics(List<LogRecord> record){
+    public Statistics(List<LogRecord> record) {
         this(List.of(), record);
     }
 
     public Statistics(List<String> files, List<LogRecord> records) {
         this.files = files != null ? List.copyOf(files) : List.of();
         this.totalRequests = records.size();
-        this.resCode = records.stream()
-            .collect(Collectors.groupingBy(LogRecord::status, Collectors.counting()));
-        this.topResources = records.stream()
-                .collect(Collectors.groupingBy(LogRecord::resource, Collectors.counting()))
-                .entrySet().stream()
-                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-                .limit(TOP_RESOURCES_LIMIT)
-                .collect(Collectors.toList());
+        this.resCode = records.stream().collect(Collectors.groupingBy(LogRecord::status, Collectors.counting()));
+        this.topResources =
+                records.stream()
+                        .collect(Collectors.groupingBy(LogRecord::resource, Collectors.counting()))
+                        .entrySet()
+                        .stream()
+                        .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                        .limit(TOP_RESOURCES_LIMIT)
+                        .collect(Collectors.toList());
 
-        List<Long> sizes = records.stream()
-            .map(LogRecord::bodyBytesSent)
-            .sorted()
-            .collect(Collectors.toList());
+        List<Long> sizes =
+                records.stream().map(LogRecord::bodyBytesSent).sorted().collect(Collectors.toList());
 
         if (sizes.isEmpty()) {
             this.avgSize = 0.0;
@@ -55,7 +54,7 @@ public class Statistics {
         }
     }
 
-    public List<String> getFiles(){
+    public List<String> getFiles() {
         return files;
     }
 

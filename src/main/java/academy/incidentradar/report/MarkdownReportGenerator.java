@@ -1,19 +1,17 @@
 package academy.incidentradar.report;
 
+import academy.incidentradar.statistics.Statistics;
 import java.util.Map;
 
-import academy.incidentradar.report.ReportGenerate;
-import academy.incidentradar.statistics.Statistics;;
+public class MarkdownReportGenerator implements ReportGenerate {
 
-public class MarkdownReportGenerator implements  ReportGenerate{
-    
-    @Override 
-    public String generate(Statistics stat){
+    @Override
+    public String generate(Statistics stat) {
         StringBuilder sb = new StringBuilder();
 
         sb.append("# Incident Radar Report \n \n");
         sb.append("## Files \n");
-        for(String file:stat.getFiles()){
+        for (String file : stat.getFiles()) {
             sb.append("- ").append(file + " \n");
         }
         sb.append(" \n # Report \n \n");
@@ -26,13 +24,21 @@ public class MarkdownReportGenerator implements  ReportGenerate{
         sb.append("| Code | Count |\n|------|-------|\n");
         stat.getResCode().entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
-                .forEach(e -> sb.append("| ").append(e.getKey()).append(" | ").append(e.getValue()).append(" |\n"));
+                .forEach(e -> sb.append("| ")
+                        .append(e.getKey())
+                        .append(" | ")
+                        .append(e.getValue())
+                        .append(" |\n"));
         sb.append("\n");
 
         sb.append("## Top Resources\n\n");
         sb.append("| Resource | Count |\n|----------|-------|\n");
         for (var entry : stat.getTopResources()) {
-            sb.append("| ").append(entry.getKey()).append(" | ").append(entry.getValue()).append(" |\n");
+            sb.append("| ")
+                    .append(entry.getKey())
+                    .append(" | ")
+                    .append(entry.getValue())
+                    .append(" |\n");
         }
 
         return sb.toString();

@@ -3,12 +3,12 @@ package academy.incidentradar;
 import academy.incidentradar.filter.DateFilter;
 import academy.incidentradar.model.LogRecord;
 import academy.incidentradar.parser.LogParser;
+import academy.incidentradar.report.JsonReportGenerator;
+import academy.incidentradar.report.MarkdownReportGenerator;
+import academy.incidentradar.report.ReportGenerate;
 import academy.incidentradar.source.LogSource;
 import academy.incidentradar.source.LogSourceFactory;
 import academy.incidentradar.statistics.Statistics;
-import academy.incidentradar.report.MarkdownReportGenerator;
-import academy.incidentradar.report.JsonReportGenerator;
-import academy.incidentradar.report.ReportGenerate;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -47,11 +47,11 @@ public class App {
                 Statistics stat = new Statistics(records);
                 ReportGenerate generator = createGenerator();
                 String reportContent = generator.generate(stat);
-                
+
                 Path outputPath = config.getOutputPath();
-                if(outputPath != null){
+                if (outputPath != null) {
                     writeToFile(reportContent, outputPath);
-                }else{
+                } else {
                     System.out.println(reportContent);
                 }
             }
@@ -108,7 +108,7 @@ public class App {
             throw new CliException("Расширение выходного файла не является markdown.");
         }
         if (Files.exists(output)) {
-            throw new CliException("Файл отчёта уже есть. Он -  " + output);
+            throw new CliException("Файл отчёта уже существует: " + output);
         }
     }
 

@@ -30,8 +30,8 @@ public class FileLogSource implements LogSource {
     @Override
     public void close() {}
 
-    @Override 
-    public List<String> getFiles(){
+    @Override
+    public List<String> getFiles() {
         return List.of(path.toString());
     }
 }

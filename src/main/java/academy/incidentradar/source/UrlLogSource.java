@@ -48,8 +48,8 @@ public class UrlLogSource implements LogSource {
         }
     }
 
-    @Override 
-    public List<String> getFiles(){
+    @Override
+    public List<String> getFiles() {
         return List.of(uri.toString());
     }
 }
