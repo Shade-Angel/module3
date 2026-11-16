@@ -6,6 +6,9 @@ import academy.incidentradar.parser.LogParser;
 import academy.incidentradar.source.LogSource;
 import academy.incidentradar.source.LogSourceFactory;
 import academy.incidentradar.statistics.Statistics;
+import academy.incidentradar.report.MarkdownReportGenerator;
+import academy.incidentradar.report.JsonReportGenerator;
+import academy.incidentradar.report.ReportGenerate;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,10 +45,35 @@ public class App {
                         .collect(Collectors.toList());
 
                 Statistics stat = new Statistics(records);
-                System.out.println("Статистика успешно прочитана : " + stat);
+                ReportGenerate generator = createGenerator();
+                String reportContent = generator.generate(stat);
+                
+                Path outputPath = config.getOutputPath();
+                if(outputPath != null){
+                    writeToFile(reportContent, outputPath);
+                }else{
+                    System.out.println(reportContent);
+                }
             }
         } catch (IOException e) {
             throw new CliException("Ошибка чтения: " + e.getMessage());
+        }
+    }
+
+    private ReportGenerate createGenerator() {
+        String format = currentFormat();
+        if ("json".equals(format)) {
+            return new JsonReportGenerator();
+        } else {
+            return new MarkdownReportGenerator();
+        }
+    }
+
+    private void writeToFile(String content, Path outputPath) {
+        try {
+            Files.writeString(outputPath, content);
+        } catch (IOException e) {
+            throw new CliException("Ошибка записи отчёта: " + e.getMessage());
         }
     }
 
