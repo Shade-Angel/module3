@@ -46,7 +46,7 @@ public final class Main implements Callable<Integer> {
     private static final class ExceptionHandler implements IExecutionExceptionHandler {
         @Override
         public int handleExecutionException(Exception ex, CommandLine cmd, ParseResult parse) {
-            if (ex instanceof CliException) {
+            if (ex instanceof CliException || ex instanceof picocli.CommandLine.ParameterException) {
                 cmd.getErr().println("Error: " + ex.getMessage());
                 return 2;
             }

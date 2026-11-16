@@ -126,6 +126,7 @@ python3 -m http.server 8000 --bind 127.0.0.1 --directory samples/logs
 
 
 <br>
+
 # MR2
 
 **<p style="color: red">Что сделано:</p>**
@@ -159,3 +160,45 @@ python3 -m http.server 8000 --bind 127.0.0.1 --directory samples/logs
 | `mandatory/mr2/DateFilterTest.java` | Обязательные тесты: 4 комбинации границ дат |
 | `mandatory/mr2/StatisticsTest.java` | Обязательные тесты: коды, top-10, average, max, p95, округление |
 | `NullOrCalculationTest`             | Собственный тест, проверяет на деление на ноль при пустых данных и обработку null/blank строк парсером.|
+
+
+
+
+
+<br>
+
+# MR3
+
+**<p style="color: red">Что сделано:</p>**
+
+**Генерация отчётов:**
+- Реализована генерация отчётов в форматах JSON и Markdown
+- JSON-отчёт
+- Markdown-отчёт содержит те же данные в виде таблиц с заголовком
+- Защита от случайной перезаписи, если файл по `--output-path` уже существует, программа завершится с exit code 2
+
+
+**Тестирование:**
+- Все обязательные blackbox-тесты реализованы и проходят
+- Добавлен личный тест `ReportEdgeCasesTest.java` на граничные случаи (пустой файл логов)
+
+## Структура MR3
+
+| Файл | О чём |
+| :--- | :--- |
+| `report/ReportGenerate.java`                  | Интерфейс для генераторов отчётов |
+| `report/JsonReportGenerator.java`             | Генерация JSON-отчёта через Jackson |
+| `report/MarkdownReportGenerator.java`         | Генерация Markdown-отчёта с таблицами |
+| `statistics/ReportDto.java`                   | DTO для корректной сериализации JSON-отчёта |
+| `statistics/ResponseSize.java`                | DTO для responseSizeInBytes  |
+| `statistics/ResourceCount.java`               | DTO для элемента списка resources |
+| `App.java`                                    | Цикл работы чтение -> парсинг -> статистика -> отчёт |
+| `Main.java`                                   | Обновлен, добавлена обработка `ParameterException` от picocli как exit code 2 |
+| `source/LogSource.java`                       | Добавлен метод `getFiles()` для отслеживания обработанных файлов |
+| `mandatory/mr3/ReportAndExitCodeTest.java`    | Обязательные blackbox-тесты |
+| `mandatory/mr3/ReportEdgeCasesTest.java`      | Личный тест проверяет пустой файл логов, а именно от деления на ноль |
+
+**Бонусы 12 баллов:**
+- Вывод отчёта в stdout, если не указан `--output-path`
+- Названия HTTP-кодов в Markdown-отчёте
+- Поддержка генерации отчёта в формате Asciidoc

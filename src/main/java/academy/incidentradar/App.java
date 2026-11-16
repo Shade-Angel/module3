@@ -3,6 +3,10 @@ package academy.incidentradar;
 import academy.incidentradar.filter.DateFilter;
 import academy.incidentradar.model.LogRecord;
 import academy.incidentradar.parser.LogParser;
+import academy.incidentradar.report.AsciiReport;
+import academy.incidentradar.report.JsonReportGenerator;
+import academy.incidentradar.report.MarkdownReportGenerator;
+import academy.incidentradar.report.ReportGenerate;
 import academy.incidentradar.source.LogSource;
 import academy.incidentradar.source.LogSourceFactory;
 import academy.incidentradar.statistics.Statistics;
@@ -42,18 +46,45 @@ public class App {
                         .collect(Collectors.toList());
 
                 Statistics stat = new Statistics(records);
-                System.out.println("Статистика успешно прочитана : " + stat);
+                ReportGenerate generator = createGenerator();
+                String reportContent = generator.generate(stat);
+
+                Path outputPath = config.getOutputPath();
+                if (outputPath != null) {
+                    writeToFile(reportContent, outputPath);
+                } else {
+                    System.out.println(reportContent);
+                }
             }
         } catch (IOException e) {
             throw new CliException("Ошибка чтения: " + e.getMessage());
         }
     }
 
+    private ReportGenerate createGenerator() {
+        String format = currentFormat();
+        if ("json".equals(format)) {
+            return new JsonReportGenerator();
+        } else if ("adoc".equals(format)) {
+            return new AsciiReport();
+        } else {
+            return new MarkdownReportGenerator();
+        }
+    }
+
+    private void writeToFile(String content, Path outputPath) {
+        try {
+            Files.writeString(outputPath, content);
+        } catch (IOException e) {
+            throw new CliException("Ошибка записи отчёта: " + e.getMessage());
+        }
+    }
+
     private void validateForma() {
         String format =
                 config.getOutputFormat() != null ? config.getOutputFormat().toLowerCase() : "markdown";
-        if (!"json".equals(format) && !"markdown".equals(format)) {
-            throw new CliException("Вы ввели непправильный формат --output-format, возможны json или markdown");
+        if (!"json".equals(format) && !"markdown".equals(format) && !"adoc".equals(format)) {
+            throw new CliException("Вы ввели непправильный формат --output-format, возможны json, markdown, adoc");
         }
     }
 
@@ -79,8 +110,11 @@ public class App {
         if ("markdown".equals(format) && !"md".equals(ext) && !"markdown".equals(ext)) {
             throw new CliException("Расширение выходного файла не является markdown.");
         }
+        if ("adoc".equals(format) && !"adoc".equals(ext) && !"asciidoc".equals(ext)) {
+            throw new CliException("Расширение выходного файла не является .adoc или .asciidoc");
+        }
         if (Files.exists(output)) {
-            throw new CliException("Файл отчёта уже есть. Он -  " + output);
+            throw new CliException("Файл отчёта уже существует: " + output);
         }
     }
 

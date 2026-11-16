@@ -4,6 +4,7 @@ import academy.incidentradar.CliException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.stream.Stream;
 
 public class FileLogSource implements LogSource {
@@ -28,4 +29,9 @@ public class FileLogSource implements LogSource {
 
     @Override
     public void close() {}
+
+    @Override
+    public List<String> getFiles() {
+        return List.of(path.toString());
+    }
 }

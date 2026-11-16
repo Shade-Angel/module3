@@ -112,4 +112,9 @@ public class GlobLogSource implements LogSource {
 
     @Override
     public void close() {}
+
+    @Override
+    public List<String> getFiles() {
+        return files.stream().map(java.nio.file.Path::toString).toList();
+    }
 }
