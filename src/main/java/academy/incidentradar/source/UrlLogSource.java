@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
 import java.util.stream.Stream;
 import org.jspecify.annotations.Nullable;
 
@@ -45,5 +46,10 @@ public class UrlLogSource implements LogSource {
         if (res != null && res.body() != null) {
             res.body().close();
         }
+    }
+
+    @Override 
+    public List<String> getFiles(){
+        return List.of(uri.toString());
     }
 }
